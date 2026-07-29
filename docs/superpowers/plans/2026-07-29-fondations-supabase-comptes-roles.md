@@ -3030,7 +3030,7 @@ git commit -m "test(e2e): parcours complet et integration ci"
 
 ## Notes d'exécution
 
-- **Docker requis** pour Supabase local (`supabase start`).
+- **Runtime de conteneurs requis** pour Supabase local (`supabase start`) — utiliser **OrbStack** (`brew install orbstack`), pas Docker Desktop. `supabase start` fonctionne sans changement.
 - **Confirmation email désactivée en local** (`supabase/config.toml`) pour fluidifier les tests E2E ; réactivée en prod (emails via Resend configuré dans Supabase Auth).
 - **Google OAuth** : secrets configurés hors repo (env / dashboard Supabase).
 - Ordre d'exécution = ordre des tâches ; certains tests E2E (ex. Task 19) ne passent au vert qu'une fois leur page dépendante livrée (Task 20) — c'est intentionnel et signalé.
