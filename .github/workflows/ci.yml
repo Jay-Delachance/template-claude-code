@@ -6,10 +6,28 @@ on:
   pull_request:
 
 jobs:
+  preflight:
+    name: Vérification du projet
+    runs-on: ubuntu-latest
+    outputs:
+      has_package: ${{ steps.check.outputs.has_package }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: check
+        run: |
+          if [ -f package.json ]; then
+            echo "has_package=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_package=false" >> $GITHUB_OUTPUT
+            echo "Aucun package.json — jobs npm ignorés"
+          fi
+
   quality:
     name: Typecheck · Lint · Tests · Secrets
     runs-on: ubuntu-latest
-    if: hashFiles('package.json') != ''
+    needs: preflight
+    if: needs.preflight.outputs.has_package == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +59,8 @@ jobs:
   security:
     name: Dépendances vulnérables
     runs-on: ubuntu-latest
-    if: hashFiles('package.json') != ''
+    needs: preflight
+    if: needs.preflight.outputs.has_package == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -59,8 +78,8 @@ jobs:
   e2e:
     name: Tests E2E Playwright
     runs-on: ubuntu-latest
-    if: hashFiles('package.json') != ''
-    needs: quality
+    needs: [preflight, quality]
+    if: needs.preflight.outputs.has_package == 'true'
     steps:
       - uses: actions/checkout@v4
 
