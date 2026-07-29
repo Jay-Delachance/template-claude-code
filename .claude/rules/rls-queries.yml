@@ -1,0 +1,10 @@
+id: sql-without-tenant-filter
+language: TypeScript
+rule:
+  all:
+    - pattern: '$OBJ.query($$$)'
+    - not:
+        has:
+          pattern: 'organizationId: $VAL'
+message: "Requête SQL sans filtre organizationId — risque de fuite multi-tenant"
+severity: error

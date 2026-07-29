@@ -1,0 +1,30 @@
+# Tutoriel — ne pas inclure dans le template
+tutoriel-claude-code-pro.md
+
+# Stryker
+.stryker-tmp/
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,6 @@
+id: no-focused-test
+language: JavaScript
+rule:
+  pattern: $_.only($$$)
+message: "test.only() interdit — enlève-le avant de merger"
+severity: error

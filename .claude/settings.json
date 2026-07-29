@@ -1,0 +1,49 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-tool-use.sh" }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": ["Bash", "Read", "Write", "Edit"],
+    "deny": []
+  },
+  "agents": {
+    "qa-tester": {
+      "permissions": {
+        "allow": ["Read"],
+        "deny": ["Bash", "Write", "Edit"]
+      }
+    }
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp"]
+    },
+   "typescript-lsp": {
+      "command": "typescript-language-server",
+      "args": ["--stdio"]
+    },
+   "grafana": {
+      "command": "npx",
+      "args": ["@grafana/mcp-server"],
+      "env": {
+        "GRAFANA_URL": "https://ton-grafana.example.com"
+      }
+    }
+  }
+}
