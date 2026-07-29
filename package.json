@@ -10,8 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "db:start": "supabase start",
-    "db:reset": "supabase db reset"
+    "db:reset": "node scripts/db-apply.mjs --reset",
+    "db:apply": "node scripts/db-apply.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

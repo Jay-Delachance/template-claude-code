@@ -5,8 +5,13 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.ts', 'app/**/*.test.ts', 'lib/**/*.test.ts'],
+    include: [
+      'tests/**/*.test.{ts,tsx}',
+      'app/**/*.test.{ts,tsx}',
+      'lib/**/*.test.{ts,tsx}',
+      'components/**/*.test.{ts,tsx}',
+    ],
     exclude: ['tests/e2e/**'],
-    setupFiles: ['./node_modules/dotenv/config.js'],
+    setupFiles: ['./tests/setup.ts'],
   },
 })
