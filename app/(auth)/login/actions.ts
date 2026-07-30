@@ -23,5 +23,5 @@ export async function signIn(_prev: unknown, formData: FormData) {
     // Message générique : pas d'énumération de comptes, pas de log d'email.
     return { error: 'Email ou mot de passe incorrect.' }
   }
-  redirect(next.startsWith('/') ? next : '/dashboard')
+  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard')
 }

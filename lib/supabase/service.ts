@@ -1,3 +1,4 @@
+import 'server-only'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 // Client service_role — SERVEUR UNIQUEMENT. Ne jamais importer côté client.

@@ -1,12 +1,18 @@
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentContext } from '@/lib/auth/context'
 import { BrandForm } from './brand-form'
 import { DeleteBrandButton } from '@/components/delete-brand-button'
 
 export default async function BrandsPage() {
+  const ctx = await getCurrentContext()
+  if (!ctx?.organization) redirect('/dashboard')
+
   const supabase = await createClient()
   const { data: brands } = await supabase
     .from('brands')
     .select('id, name, sector')
+    .eq('organization_id', ctx.organization.id)
     .order('created_at', { ascending: true })
 
   return (
