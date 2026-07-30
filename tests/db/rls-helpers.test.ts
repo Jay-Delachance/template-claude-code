@@ -14,3 +14,16 @@ test('auth_is_member renvoie true pour un membre, false sinon', async () => {
   const outside = await client.rpc('auth_is_member', { org: other!.id })
   expect(outside.data).toBe(false)
 })
+
+test('auth_has_role renvoie true si le rôle correspond, false sinon', async () => {
+  const admin = serviceClient()
+  const { client, userId } = await createUserClient(`hasrole-${Date.now()}@test.local`)
+  const { data: org } = await admin.from('organizations').insert({ name: 'Org Role' }).select('id').single()
+  await admin.from('memberships').insert({ organization_id: org!.id, user_id: userId, role: 'owner' })
+
+  const hasRole = await client.rpc('auth_has_role', { org: org!.id, roles: ['owner', 'admin'] })
+  expect(hasRole.data).toBe(true)
+
+  const noRole = await client.rpc('auth_has_role', { org: org!.id, roles: ['member'] })
+  expect(noRole.data).toBe(false)
+})
