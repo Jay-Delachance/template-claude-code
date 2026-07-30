@@ -56,7 +56,6 @@ export function ChangeRoleForm({
       >
         <option value="member">Membre</option>
         <option value="admin">Admin</option>
-        <option value="owner">Owner</option>
       </select>
     </form>
   )

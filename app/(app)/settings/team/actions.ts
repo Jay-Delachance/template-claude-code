@@ -34,7 +34,7 @@ export async function inviteMember(_prev: unknown, formData: FormData) {
 
   const acceptUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invitations/accept?token=${token}`
   const { subject, html } = invitationEmail({ orgName: ctx.organization.name, acceptUrl })
-  await sendEmail({ to: email, subject, html }) // échec email non bloquant
+  void sendEmail({ to: email, subject, html }).catch(() => {})
 
   revalidatePath('/settings/team')
   return { ok: true }

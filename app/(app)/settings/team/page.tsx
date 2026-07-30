@@ -6,15 +6,17 @@ import { InviteForm, ChangeRoleForm, RemoveMemberButton } from './team-forms'
 
 export default async function TeamPage() {
   const ctx = await getCurrentContext()
-  if (!ctx?.role || !MANAGER_ROLES.includes(ctx.role)) redirect('/dashboard')
+  if (!ctx?.role || !ctx.organization || !MANAGER_ROLES.includes(ctx.role)) redirect('/dashboard')
 
   const supabase = await createClient()
   const { data: members } = await supabase
     .from('memberships')
     .select('id, role, profiles(full_name, id)')
+    .eq('organization_id', ctx.organization.id)
   const { data: invites } = await supabase
     .from('invitations')
     .select('email, role, accepted_at')
+    .eq('organization_id', ctx.organization.id)
     .is('accepted_at', null)
 
   return (
