@@ -60,7 +60,12 @@ export async function getCurrentContext(): Promise<AuthContext | null> {
     .maybeSingle()
 
   const brandRows = membership
-    ? (await supabase.from('brands').select('id, organization_id, name, sector')).data ?? []
+    ? (
+        await supabase
+          .from('brands')
+          .select('id, organization_id, name, sector')
+          .eq('organization_id', membership.organization_id)
+      ).data ?? []
     : []
 
   const cookieStore = await cookies()
@@ -69,7 +74,7 @@ export async function getCurrentContext(): Promise<AuthContext | null> {
     brandRows.find((b) => b.id === cookieBrand)?.id ?? brandRows[0]?.id ?? null
 
   return mapContext(
-    { id: user.id, email: user.email! },
+    { id: user.id, email: user.email ?? '' },
     membership as MembershipRow,
     brandRows,
     activeBrandId,
