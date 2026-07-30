@@ -2,11 +2,14 @@
 
 import Link from 'next/link'
 import { useActionState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { SubmitButton } from '@/components/submit-button'
 import { signIn, signInWithGoogle } from './actions'
 
 export default function LoginPage() {
   const [state, action] = useActionState(signIn, null)
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') ?? ''
   return (
     <main className="mx-auto mt-20 max-w-sm space-y-4">
       <h1 className="text-2xl font-bold">Connexion</h1>
@@ -15,6 +18,7 @@ export default function LoginPage() {
           className="w-full rounded border p-2" required />
         <input data-testid="password" name="password" type="password" placeholder="Mot de passe"
           className="w-full rounded border p-2" required />
+        {next && <input type="hidden" name="next" value={next} />}
         {state?.error && (
           <p data-testid="form-error" className="text-sm text-red-600">{state.error}</p>
         )}

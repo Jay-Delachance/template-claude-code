@@ -16,11 +16,12 @@ export async function signInWithGoogle() {
 export async function signIn(_prev: unknown, formData: FormData) {
   const email = String(formData.get('email') ?? '')
   const password = String(formData.get('password') ?? '')
+  const next = String(formData.get('next') ?? '/dashboard')
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) {
     // Message générique : pas d'énumération de comptes, pas de log d'email.
     return { error: 'Email ou mot de passe incorrect.' }
   }
-  redirect('/dashboard')
+  redirect(next.startsWith('/') ? next : '/dashboard')
 }
