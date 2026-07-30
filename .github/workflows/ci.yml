@@ -28,6 +28,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: preflight
     if: needs.preflight.outputs.has_package == 'true'
+    # NOTE: `npm test` (Vitest) requires a Supabase project reachable from CI.
+    # Point these secrets at a DEDICATED CI Supabase project — NOT the dev
+    # project — because `npm run db:reset` recreates the public schema and
+    # would wipe all dev data.
+    # Required secrets: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    #                   SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ACCESS_TOKEN
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +58,9 @@ jobs:
 
       - name: Format
         run: npx prettier --check src/
+
+      - name: Build
+        run: npm run build
 
       - name: Tests
         run: npm test
@@ -75,11 +89,30 @@ jobs:
       - name: npm audit
         run: npm audit --audit-level=high
 
+  # NOTE: Tests E2E Playwright (npm run test:e2e)
+  # Ce job est documenté ici mais désactivé par défaut (if: false) pour les
+  # raisons suivantes :
+  #   1. Il nécessite un runner capable d'exécuter des navigateurs
+  #      (ubuntu-latest convient, mais les deps système doivent être
+  #      installées via `npx playwright install --with-deps`).
+  #   2. Il nécessite que l'application Next.js soit démarrée (webServer
+  #      dans playwright.config.ts le gère, mais requiert `npm run dev` et
+  #      les mêmes secrets Supabase que le job quality, pointant vers le
+  #      projet CI dédié).
+  #   3. `npm run db:reset` DOIT être exécuté avant les tests E2E pour
+  #      garantir un état de base propre.
+  # Pour activer : remplacer `if: false` par la condition souhaitée
+  # (ex. `if: github.ref == 'refs/heads/main'`).
   e2e:
-    name: Tests E2E Playwright
+    name: Tests E2E Playwright (optionnel — désactivé sans navigateur)
     runs-on: ubuntu-latest
     needs: [preflight, quality]
-    if: needs.preflight.outputs.has_package == 'true'
+    if: false  # Activer uniquement sur un runner avec navigateur + projet CI dédié
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -94,5 +127,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Reset DB (projet CI dédié requis)
+        run: npm run db:reset
+
       - name: E2E
-        run: npx playwright test
+        run: npm run test:e2e
