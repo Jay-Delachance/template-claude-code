@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentContext } from '@/lib/auth/context'
+import { BrandSwitcher } from '@/components/brand-switcher'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getCurrentContext()
@@ -13,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <span className="font-bold">Veracto</span>
         <div className="flex items-center gap-6">
           <span data-testid="org-name" className="text-sm text-gray-600">{ctx.organization.name}</span>
+          <BrandSwitcher brands={ctx.brands} activeId={ctx.activeBrandId} />
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/dashboard" data-testid="nav-dashboard">Dashboard</Link>
             <Link href="/brands" data-testid="nav-brands">Marques</Link>
