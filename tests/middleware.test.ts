@@ -11,7 +11,6 @@ test('un accès non authentifié à /dashboard redirige vers /login', async () =
 
 test("une route publique (/login) n'est pas redirigée", async () => {
   const res = await middleware(new NextRequest('http://localhost:3000/login'))
-  // pas de redirection vers /login (déjà public) : soit 200/pass-through, pas un 307 vers /login
-  const loc = res.headers.get('location')
-  expect(loc === null || !loc.endsWith('/login')).toBe(true)
+  // une route publique ne doit pas déclencher de redirection
+  expect(res.status).not.toBe(307)
 })
