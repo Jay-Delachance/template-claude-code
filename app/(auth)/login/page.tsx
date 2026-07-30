@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 import { SubmitButton } from '@/components/submit-button'
-import { signIn } from './actions'
+import { signIn, signInWithGoogle } from './actions'
 
 export default function LoginPage() {
   const [state, action] = useActionState(signIn, null)
@@ -19,6 +19,10 @@ export default function LoginPage() {
           <p data-testid="form-error" className="text-sm text-red-600">{state.error}</p>
         )}
         <SubmitButton>Se connecter</SubmitButton>
+      </form>
+      <form action={signInWithGoogle}>
+        <button type="submit" data-testid="google-signin"
+          className="w-full rounded border p-2">Continuer avec Google</button>
       </form>
       <div className="text-sm">
         <Link href="/reset-password" className="underline">Mot de passe oublié ?</Link>
