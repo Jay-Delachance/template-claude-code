@@ -5,6 +5,7 @@ async function seedOrgWithMember(name: string, email: string) {
   const admin = serviceClient()
   const { client, userId } = await createUserClient(email)
   const { data: org } = await admin.from('organizations').insert({ name }).select('id').single()
+  expect(org).not.toBeNull()
   await admin.from('memberships').insert({ organization_id: org!.id, user_id: userId, role: 'owner' })
   await admin.from('brands').insert({ organization_id: org!.id, name: `${name} brand`, sector: 'tech' })
   return { client, orgId: org!.id }
@@ -15,6 +16,7 @@ test('un membre de l\'org A ne voit pas les marques de l\'org B', async () => {
   const b = await seedOrgWithMember('Org B', `b-${Date.now()}@test.local`)
 
   const { data: mine } = await a.client.from('brands').select('id, organization_id')
+  expect(mine!.length).toBeGreaterThan(0)
   expect(mine!.every((row) => row.organization_id === a.orgId)).toBe(true)
   expect(mine!.some((row) => row.organization_id === b.orgId)).toBe(false)
 })
