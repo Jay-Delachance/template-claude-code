@@ -1,9 +1,27 @@
 name: CI
 
+# Stratégie (documenter le choix dans docs/decisions/) :
+# - PR feature → develop : check léger (quality). Pas d'e2e.
+# - PR develop → main    : quality + e2e (release).
+# - push main (merge)    : quality (filet, sans e2e) puis deploy si vert.
+#                          Utile si la protection de branche est indisponible
+#                          (payante sur repo privé) : garde-fou au merge.
+# - hebdo / manuel       : npm audit (sorti du chemin des PR).
 on:
-  push:
-    branches: [main, develop]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # lundi 06:00 UTC — audit des dépendances
+  workflow_dispatch:
+
+# Annule les runs obsolètes d'une même PR (nouveau push = on coupe l'ancien).
+# Jamais sur main : cancel-in-progress uniquement pour les pull_request, pour
+# ne pas interrompre un déploiement en cours.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   preflight:
@@ -27,7 +45,15 @@ jobs:
     name: Typecheck · Lint · Tests · Secrets
     runs-on: ubuntu-latest
     needs: preflight
-    if: needs.preflight.outputs.has_package == 'true'
+    # Check léger de toute PR (non brouillon), du merge sur main (filet avant
+    # deploy) et des lancements manuels.
+    if: >-
+      needs.preflight.outputs.has_package == 'true' &&
+      (
+        (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch'
+      )
     steps:
       - uses: actions/checkout@v4
 
@@ -53,14 +79,21 @@ jobs:
 
       - name: Secrets scan
         run: |
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-          gitleaks detect --source . --no-git
+          # Version épinglée (reproductibilité + pas de dérive supply-chain) —
+          # préférée à l'install script non versionné.
+          GITLEAKS_VERSION=8.30.1
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /usr/local/bin gitleaks
+          gitleaks detect --source . --no-git --redact
 
   security:
     name: Dépendances vulnérables
     runs-on: ubuntu-latest
     needs: preflight
-    if: needs.preflight.outputs.has_package == 'true'
+    # Sorti du chemin des PR : audit hebdomadaire (schedule) ou à la demande.
+    # C'est ce job qui remonte les CVE publiées entre deux périodes d'activité.
+    if: >-
+      needs.preflight.outputs.has_package == 'true' &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@v4
 
@@ -79,7 +112,21 @@ jobs:
     name: Tests E2E Playwright
     runs-on: ubuntu-latest
     needs: [preflight, quality]
-    if: needs.preflight.outputs.has_package == 'true'
+    timeout-minutes: 15
+    # Réservé à la release (PR vers main) et aux lancements manuels — job le
+    # plus coûteux, inutile sur chaque PR feature → develop.
+    if: >-
+      needs.preflight.outputs.has_package == 'true' &&
+      (
+        (github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.base_ref == 'main') ||
+        github.event_name == 'workflow_dispatch'
+      )
+    # Conteneur officiel Playwright : navigateurs + libs système préinstallés.
+    # Évite `playwright install --with-deps` (apt), qui peut se figer sur un
+    # miroir Ubuntu injoignable côté runner.
+    # TODO(projet) : aligner le tag sur la version de @playwright/test.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
     steps:
       - uses: actions/checkout@v4
 
@@ -91,8 +138,28 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
       - name: E2E
         run: npx playwright test
+
+  # ---------------------------------------------------------------------------
+  # Déploiement (placeholder) — à activer et adapter par projet.
+  # Décommenter, puis renseigner l'hébergeur, les chemins et les secrets requis.
+  # Ne se déclenche que sur un merge (push) vers main, et seulement si `quality`
+  # est vert (filet remplaçant la protection de branche). L'e2e a déjà été
+  # validé dans la PR develop → main.
+  #
+  # deploy:
+  #   name: Déploiement
+  #   runs-on: ubuntu-latest
+  #   needs: [preflight, quality]
+  #   if: >-
+  #     github.ref == 'refs/heads/main' &&
+  #     github.event_name == 'push' &&
+  #     needs.preflight.outputs.has_package == 'true'
+  #   concurrency:
+  #     group: deploy
+  #     cancel-in-progress: false
+  #   steps:
+  #     - name: Déployer
+  #       run: echo "TODO: étapes de déploiement du projet"
+  # ---------------------------------------------------------------------------
